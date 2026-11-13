@@ -1,31 +1,31 @@
 #include <iostream>
 using namespace std;
 
-// queue
+// Antrean
 
-struct NodeQueue {
+struct NodeAntrean {
     string namaPelanggan;
-    NodeQueue* next;
+    NodeAntrean* next;
 };
 
-struct queue {
-    NodeQueue* front;
-    NodeQueue* rear;
+struct Antrean {
+    NodeAntrean* front;
+    NodeAntrean* rear;
     int count;
 };
 
-void init(queue& q) {
+void init(Antrean& q) {
     q.front = nullptr;
     q.rear = nullptr;
     q.count = 0;
 }
 
-bool isEmpty(queue& q) {
+bool isEmpty(Antrean& q) {
     return q.front == nullptr;
 }
 
-void enqueue(queue& q, string nama) {
-    NodeQueue* baru = new NodeQueue();
+void enAntrean(Antrean& q, string nama) {
+    NodeAntrean* baru = new NodeAntrean();
     baru->namaPelanggan = nama;
     baru->next = nullptr;
     if (isEmpty(q)) {
@@ -38,11 +38,11 @@ void enqueue(queue& q, string nama) {
     q.count++;
 }
 
-bool dequeue(queue& q, string& namaKeluar) {
+bool deAntrean(Antrean& q, string& namaKeluar) {
     if (isEmpty(q)) {
         return false;
     }
-    NodeQueue* bantu = q.front;
+    NodeAntrean* bantu = q.front;
     namaKeluar = bantu->namaPelanggan;
     q.front = q.front->next;
     if (q.front == nullptr) {
@@ -54,8 +54,8 @@ bool dequeue(queue& q, string& namaKeluar) {
 }
 
 // Tambah di posisi depan untuk keperluan undo
-void pushFrontQueue(queue& q, string nama) {
-    NodeQueue* baru = new NodeQueue();
+void pushFrontAntrean(Antrean& q, string nama) {
+    NodeAntrean* baru = new NodeAntrean();
     baru->namaPelanggan = nama;
     baru->next = q.front;
     q.front = baru;
@@ -66,9 +66,9 @@ void pushFrontQueue(queue& q, string nama) {
 }
 
 // Hapus satu pelanggan dari waiting list saat undo pesanan
-bool hapusAntrian(queue& q, string nama) {
-    NodeQueue* prev = nullptr;
-    NodeQueue* curr = q.front;
+bool hapusAntrian(Antrean& q, string nama) {
+    NodeAntrean* prev = nullptr;
+    NodeAntrean* curr = q.front;
     while (curr != nullptr) {
         if (curr->namaPelanggan == nama) {
             if (prev == nullptr) {
@@ -89,10 +89,10 @@ bool hapusAntrian(queue& q, string nama) {
     return false;
 }
 
-void clearQueue(queue& q) {
-    NodeQueue* curr = q.front;
+void clearAntrean(Antrean& q) {
+    NodeAntrean* curr = q.front;
     while (curr != nullptr) {
-        NodeQueue* bantu = curr;
+        NodeAntrean* bantu = curr;
         curr = curr->next;
         delete bantu;
     }
@@ -106,7 +106,7 @@ struct Node {
     string kategori;
     int harga;
     bool tersedia; // true = tersedia, false = abis
-    queue waitingList;
+    Antrean waitingList;
     Node* left;
     Node* right;
 };
@@ -180,28 +180,28 @@ bool hapus(Node*& node, string target) {
     } else {
         // ada beberapa kasus, childnya 0
         if (node->left == nullptr && node->right == nullptr) {
-            clearQueue(node->waitingList);
+            clearAntrean(node->waitingList);
             delete node;
             node = nullptr;
         }
         // child 1 tapi yang sebelah kanan
         else if (node->left == nullptr) {
             Node* alatBantu = node; // membantu nyimpen node
-            clearQueue(node->waitingList);
+            clearAntrean(node->waitingList);
             node = node->right;
             delete alatBantu;
         }
         // child 1 tapi yang sebelah kiri
         else if (node->right == nullptr) {
             Node* alatBantu = node;
-            clearQueue(node->waitingList);
+            clearAntrean(node->waitingList);
             node = node->left;
             delete alatBantu;
         }
         // childnya itu ada 2
         else {
             Node* successor = minimum(node->right); // nilai paling kecil dari subtree kanannya root
-            clearQueue(node->waitingList);
+            clearAntrean(node->waitingList);
             node->nama = successor->nama;
             node->kategori = successor->kategori;
             node->harga = successor->harga;
@@ -218,7 +218,7 @@ void printAntrianSemua(Node* node, bool& ada) {
     if (node == nullptr) return;
     printAntrianSemua(node->left, ada);
 
-    NodeQueue* curr = node->waitingList.front;
+    NodeAntrean* curr = node->waitingList.front;
     while (curr != nullptr) {
         cout << curr->namaPelanggan << " menunggu menu " << node->nama << "\n";
         ada = true;
@@ -231,7 +231,7 @@ void clearTree(Node*& node) {
     if (node == nullptr) return;
     clearTree(node->left);
     clearTree(node->right);
-    clearQueue(node->waitingList);
+    clearAntrean(node->waitingList);
     delete node;
     node = nullptr;
 }
@@ -330,7 +330,7 @@ void menuPesan(Node*& root, linkedStack& riwayat) {
         target->tersedia = false;
         push(riwayat, "PESAN", namaMenu, pelanggan);
     } else {
-        enqueue(target->waitingList, pelanggan);
+        enAntrean(target->waitingList, pelanggan);
         cout << "Menu sedang habis, " << pelanggan << " masuk ke dalam waiting list\n";
         push(riwayat, "PESAN", namaMenu, pelanggan);
     }
@@ -351,7 +351,7 @@ void menuTersediaKembali(Node*& root, linkedStack& riwayat) {
     cout << "Menu tersedia kembali\n";
 
     string pelanggan;
-    if (dequeue(target->waitingList, pelanggan)) {
+    if (deAntrean(target->waitingList, pelanggan)) {
         cout << "Pesanan langsung diberikan kepada " << pelanggan << " dari waiting list\n";
         target->tersedia = false;
     }
@@ -391,7 +391,7 @@ void menuUndo(Node*& root, linkedStack& riwayat) {
         if (target != nullptr) {
             target->tersedia = false;
             if (aksi.pelanggan != "") {
-                pushFrontQueue(target->waitingList, aksi.pelanggan);
+                pushFrontAntrean(target->waitingList, aksi.pelanggan);
             }
         }
         cout << "Undo: Menu " << aksi.namaMenu << " kembali habis\n";
